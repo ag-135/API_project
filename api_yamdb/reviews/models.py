@@ -2,27 +2,29 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-CHOICES = [
-    ('user', 'user'),
-    ('moderator', 'moderator'),
-    ('admin', 'admin')
-]
-
 
 class User(AbstractUser):
+    user = 'user'
+    moderator = 'moderator'
+    admin = 'admin'
+    CHOICES = [
+        ('user', 'user'),
+        ('moderator', 'moderator'),
+        ('admin', 'admin')
+    ]
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(unique=True)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=50, choices=CHOICES, default='user')
 
     @property
-    def staff(self):
-        return (self.role == CHOICES[2][0]
+    def staff_check(self):
+        return (self.role == self.admin
                 or self.is_superuser or self.is_staff)
 
     @property
-    def moderator(self):
-        return (self.role == CHOICES[1][0])
+    def moderator_check(self):
+        return (self.role == self.moderator)
 
 
 class Category(models.Model):
@@ -132,7 +134,7 @@ class Review(models.Model):
                 fields=('title', 'author', ),
                 name='unique review'
             )]
-        ordering = ('pub_date',)
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text

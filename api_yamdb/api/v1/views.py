@@ -1,4 +1,3 @@
-from django.db import IntegrityError
 from django.db.models import Avg
 from rest_framework import viewsets
 from rest_framework import mixins
@@ -48,19 +47,15 @@ class UserViewSet(viewsets.ModelViewSet):
 def signup(request):
     serializer = AuthSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    try:
-        user, _ = User.objects.get_or_create(
-            username=serializer.data.get('username'),
-            email=serializer.data.get('email'))
-    except IntegrityError:
-        print('shit')
-        return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    user, _ = User.objects.get_or_create(
+        username=serializer.data.get('username'),
+        email=serializer.data.get('email'))
     confirmation_code = default_token_generator.make_token(user)
     email = serializer.data.get('email')
     send_mail(
         'Код подтверждения для регистрации',
         confirmation_code,
-        'from@example.com',
+        None,
         [email],
         fail_silently=False,
     )
@@ -75,9 +70,11 @@ def token(request):
         username = serializer.data.get('username')
         confirmation_code = serializer.data.get('confirmation_code')
         user = get_object_or_404(User, username=username)
+
         if default_token_generator.check_token(user, confirmation_code):
             user_token = AccessToken.for_user(user)
             return Response(str(user_token), status=status.HTTP_201_CREATED)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

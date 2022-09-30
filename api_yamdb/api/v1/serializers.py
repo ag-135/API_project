@@ -12,12 +12,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'first_name',
                   'last_name', 'bio', 'role')
 
-    def validate_username(self, username):
-        if username == 'me':
-            raise serializers.ValidationError('Недопустимо '
-                                              'использовать такое имя')
-        return username
-
 
 class AuthSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -27,7 +21,16 @@ class AuthSerializer(serializers.Serializer):
         if username == 'me':
             raise serializers.ValidationError('Недопустимо '
                                               'использовать такое имя')
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError('Пользователь с таким username '
+                                              'уже существует')
         return username
+
+    def validate_email(self, email):
+        if User.objects.filter(email=email):
+            raise serializers.ValidationError('Пользователь с таким email '
+                                              'уже существует')
+        return email
 
 
 class TokenSerializer(serializers.Serializer):
@@ -80,19 +83,10 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    title = serializers.SlugRelatedField(
-        slug_field='name',
-        read_only=True
-    )
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
     )
-
-    def validate_score(self, value):
-        if 0 > value > 10:
-            raise serializers.ValidationError('Оценка по 10-бальной шкале!')
-        return value
 
     def validate(self, data):
         request = self.context['request']
@@ -107,7 +101,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         return data
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
 
 
