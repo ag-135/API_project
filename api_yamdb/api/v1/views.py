@@ -19,6 +19,7 @@ from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import AccessToken
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
+from api_yamdb.settings import DEFAULT_FROM_EMAIL
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -55,7 +56,7 @@ def signup(request):
     send_mail(
         'Код подтверждения для регистрации',
         confirmation_code,
-        None,
+        DEFAULT_FROM_EMAIL,
         [email],
         fail_silently=False,
     )
